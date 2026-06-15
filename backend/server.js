@@ -85,37 +85,29 @@ app.get('/api/config/paypal', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// ======================
-// 🚀 Start Server (AFTER DB CONNECTS)
-// ======================
+// ── Connect to DB then start or export ──────────────────────
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
-  const mode = process.env.NODE_ENV || 'development';
-
-  // Connect to database BEFORE starting the server
-  const dbConnected = await connectDB();
-  
-  if (!dbConnected) {
-    console.error(`⚠️  Critical: Database connection failed. Exiting...`);
-    process.exit(1);
+if (process.env.NODE_ENV !== 'production') {
+  // Local development — connect then listen
+  const startServer = async () => {
+    const dbConnected = await connectDB()
+    if (!dbConnected) {
+      console.error('⚠️  Database connection failed. Exiting...')
+      process.exit(1)
+    }
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+    })
   }
+  startServer().catch(err => {
+    console.error('⚠️  Failed to start server:', err.message)
+    process.exit(1)
+  })
+} else {
+  // Production (Vercel) — connect on first request
+  connectDB()
+}
 
-  const server = app.listen(PORT, () => {
-    console.log(`🚀 Server running in ${mode} mode on port ${PORT}`);
-  });
-  
-  // Handle graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully...');
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
-};
-
-startServer().catch((err) => {
-  console.error(`⚠️  Failed to start server:`, err.message);
-  process.exit(1);
-});
+// ── Export for Vercel serverless ─────────────────────────────
+export default app
