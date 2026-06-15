@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://proshop-api-six.vercel.app/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://proshop-api-six.vercel.app/uploads/:path*"
+    }
+  ]
+}
